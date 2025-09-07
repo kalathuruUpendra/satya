@@ -1,5 +1,15 @@
 import { Link, useLocation } from "wouter";
-import { Home, Plus, List, CheckCircle, Users, BarChart3, Wrench, FileText, LogOut } from "lucide-react";
+import {
+  Home,
+  Plus,
+  List,
+  CheckCircle,
+  Users,
+  BarChart3,
+  Wrench,
+  FileText,
+  LogOut,
+} from "lucide-react";
 import { Button } from "./ui/button";
 import { AuthService } from "../lib/auth";
 
@@ -27,7 +37,8 @@ export default function Sidebar({ userRole, isOpen, onToggle }: SidebarProps) {
     { href: "/service-notes", label: "Service Notes", icon: FileText },
   ];
 
-  const navItems = userRole === 'frontdesk' ? frontdeskNavItems : technicianNavItems;
+  const navItems =
+    userRole === "frontdesk" ? frontdeskNavItems : technicianNavItems;
 
   const handleLinkClick = () => {
     if (window.innerWidth < 1024) {
@@ -39,32 +50,38 @@ export default function Sidebar({ userRole, isOpen, onToggle }: SidebarProps) {
     <>
       {/* Mobile overlay */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
           onClick={onToggle}
         />
       )}
-      
+
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-sidebar transform transition-transform duration-200 ease-in-out lg:translate-x-0 ${
-        isOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
-        <div className="flex items-center justify-center h-16 bg-sidebar-primary">
-          <h1 className="text-xl font-bold text-sidebar-primary-foreground">Satyasri</h1>
+      <div
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 text-gray-100 transform transition-transform duration-200 ease-in-out lg:translate-x-0 ${
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        {/* Top header */}
+        <div className="flex items-center justify-center h-16 bg-gray-800">
+          <h1 className="text-xl font-bold text-white">Satyasri</h1>
         </div>
-        
+
+        {/* Navigation */}
         <nav className="mt-8 px-4">
           <div className="space-y-2">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = location === item.href;
-              
+
               return (
                 <Link key={item.href} href={item.href}>
                   <Button
                     variant="ghost"
-                    className={`w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
-                      isActive ? 'bg-sidebar-accent text-sidebar-accent-foreground' : ''
+                    className={`w-full justify-start transition-colors ${
+                      isActive
+                        ? "bg-gray-700 text-white"
+                        : "text-gray-300 hover:bg-gray-700 hover:text-white"
                     }`}
                     onClick={handleLinkClick}
                     data-testid={`nav-${item.href.slice(1)}`}
@@ -76,11 +93,12 @@ export default function Sidebar({ userRole, isOpen, onToggle }: SidebarProps) {
               );
             })}
           </div>
-          
-          <div className="mt-8 pt-8 border-t border-sidebar-border">
+
+          {/* Logout */}
+          <div className="mt-8 pt-8 border-t border-gray-700">
             <Button
               variant="ghost"
-              className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              className="w-full justify-start text-gray-300 hover:bg-gray-700 hover:text-white"
               onClick={AuthService.logout}
               data-testid="button-logout"
             >
