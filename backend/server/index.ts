@@ -4,33 +4,19 @@ import { seedDefaultUsers } from "./seed";
 
 const app = express();
 
-// CORS middleware
+// CORS middleware - allow everyone safely
 app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  
-  // Allow requests from localhost and common deployment origins
-  const allowedOrigins = [
-    'http://localhost:3000',
-    'http://localhost:5173',
-    'https://netlify.app',
-    'https://app.netlify.com'
-  ];
-  
-  // If origin is in allowed list or no origin (server-to-server), allow it
-  if (!origin || allowedOrigins.some(allowed => origin.includes(allowed))) {
-    res.setHeader('Access-Control-Allow-Origin', origin || '*');
-  }
-  
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
+  const origin = req.headers.origin || "*";
+  res.setHeader("Access-Control-Allow-Origin", origin);
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+
+  if (req.method === "OPTIONS") {
     res.status(200).end();
     return;
   }
-  
+
   next();
 });
 
@@ -56,11 +42,7 @@ app.use((req, res, next) => {
       if (capturedJsonResponse) {
         logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
       }
-
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
-      }
-
+      if (logLine.length > 80) logLine = logLine.slice(0, 79) + "…";
       console.log(logLine);
     }
   });
@@ -76,29 +58,25 @@ app.use((req, res, next) => {
     console.error("Failed to seed default users:", error);
   }
 
-  const server = await registerRoutes(app);
+  // Register routes
+  await registerRoutes(app);
 
+  // Error handler
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
-
     res.status(status).json({ message });
-    throw err;
+    console.error(err);
   });
 
-  // Health check endpoint
-  app.get('/health', (req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  // Health check
+  app.get("/health", (_req, res) => {
+    res.json({ status: "ok", timestamp: new Date().toISOString() });
   });
 
-  // ALWAYS serve the app on the port specified in the environment variable PORT
-  // Default to 5000 if not specified.
-  const port = parseInt(process.env.PORT || '5000', 10);
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
+  // Start server
+  const port = parseInt(process.env.PORT || "5000", 10);
+  app.listen(port, "0.0.0.0", () => {
     console.log(`Backend serving on port ${port}`);
   });
 })();
