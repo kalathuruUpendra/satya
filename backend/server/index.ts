@@ -13,11 +13,7 @@ app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
   res.setHeader("Access-Control-Allow-Credentials", "true");
-
-  if (req.method === "OPTIONS") {
-    res.status(200).end();
-    return;
-  }
+  if (req.method === "OPTIONS") return res.status(200).end();
   next();
 });
 
@@ -54,7 +50,7 @@ app.use((req, res, next) => {
 });
 
 // -----------------------
-// Safe seeding guard
+// Safe seeding
 // -----------------------
 let seeded = false;
 async function safeSeedDefaultUsers() {
@@ -66,22 +62,22 @@ async function safeSeedDefaultUsers() {
 }
 
 // -----------------------
-// Main startup function
+// Startup function
 // -----------------------
 async function startServer() {
   try {
-    // 1️⃣ Seed default users
+    // Seed once
     await safeSeedDefaultUsers();
 
-    // 2️⃣ Register routes
+    // Register routes
     await registerRoutes(app);
 
-    // 3️⃣ Health check
+    // Health check
     app.get("/health", (_req, res) => {
       res.json({ status: "ok", timestamp: new Date().toISOString() });
     });
 
-    // 4️⃣ Error handler
+    // Error handling
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
       const status = err.status || err.statusCode || 500;
       const message = err.message || "Internal Server Error";
@@ -89,17 +85,17 @@ async function startServer() {
       console.error(err);
     });
 
-    // 5️⃣ Start server on Render port
+    // Listen on Render port
     const port = parseInt(process.env.PORT || "5000", 10);
     app.listen(port, "0.0.0.0", () => {
-      console.log(`🚀 Backend serving on port ${port}`);
+      console.log(`🚀 Backend running on port ${port}`);
     });
 
-  } catch (error) {
-    console.error("Startup failed:", error);
-    process.exit(1); // Exit if startup fails
+  } catch (err) {
+    console.error("Startup failed:", err);
+    process.exit(1);
   }
 }
 
-// Run the server
+// Start the server
 startServer();
