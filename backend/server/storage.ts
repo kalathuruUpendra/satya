@@ -14,7 +14,7 @@ import {
 import { randomUUID } from "crypto";
 import { db } from "./database";
 import { eq, desc, sql } from "drizzle-orm";
-import { ticket_sequences } from "@shared/schema";
+import { ticket_sequences } from "../shared/schema";
 
 export interface IStorage {
   // User methods
@@ -211,7 +211,6 @@ export class PgStorage implements IStorage {
   }
 
   async getAllTickets(): Promise<TicketWithCustomer[]> {
-    // Join tickets, customers, and users for technician name
     const rows = await db
       .select({
         id: tickets.id,
@@ -232,6 +231,7 @@ export class PgStorage implements IStorage {
         serviceNotes: tickets.serviceNotes,
         createdAt: tickets.createdAt,
         completedAt: tickets.completedAt,
+        customerId_fk: customers.id,
         customerName: customers.name,
         customerPhone: customers.phone,
         customerEmail: customers.email,
@@ -243,7 +243,36 @@ export class PgStorage implements IStorage {
       .innerJoin(customers, eq(tickets.customerId, customers.id))
       .leftJoin(users, eq(tickets.assignedTechnician, users.id))
       .orderBy(desc(tickets.createdAt));
-    return rows as TicketWithCustomer[];
+
+    return rows.map((row) => ({
+      id: row.id,
+      ticketId: row.ticketId,
+      customerId: row.customerId,
+      deviceType: row.deviceType,
+      deviceModel: row.deviceModel,
+      serialNumber: row.serialNumber,
+      purchaseDate: row.purchaseDate,
+      issueCategory: row.issueCategory,
+      problemDescription: row.problemDescription,
+      priority: row.priority,
+      serviceStatus: row.serviceStatus,
+      paymentStatus: row.paymentStatus,
+      estimatedCost: row.estimatedCost,
+      finalCost: row.finalCost,
+      assignedTechnician: row.assignedTechnician,
+      serviceNotes: row.serviceNotes,
+      createdAt: row.createdAt,
+      completedAt: row.completedAt,
+      assignedTechnicianName: row.assignedTechnicianName ?? undefined, // 🔥 fix here
+      customer: {
+        id: row.customerId_fk,
+        name: row.customerName,
+        email: row.customerEmail,
+        phone: row.customerPhone,
+        address: row.customerAddress,
+        createdAt: row.customerCreatedAt,
+      },
+    }));
   }
 
   async getTicketsByTechnician(
@@ -251,31 +280,135 @@ export class PgStorage implements IStorage {
   ): Promise<TicketWithCustomer[]> {
     const rows = await db
       .select({
-        ...tickets,
-        customer: customers,
-        assignedTechnicianName: sql`u.fullName`,
+        id: tickets.id,
+        ticketId: tickets.ticketId,
+        customerId: tickets.customerId,
+        deviceType: tickets.deviceType,
+        deviceModel: tickets.deviceModel,
+        serialNumber: tickets.serialNumber,
+        purchaseDate: tickets.purchaseDate,
+        issueCategory: tickets.issueCategory,
+        problemDescription: tickets.problemDescription,
+        priority: tickets.priority,
+        serviceStatus: tickets.serviceStatus,
+        paymentStatus: tickets.paymentStatus,
+        estimatedCost: tickets.estimatedCost,
+        finalCost: tickets.finalCost,
+        assignedTechnician: tickets.assignedTechnician,
+        serviceNotes: tickets.serviceNotes,
+        createdAt: tickets.createdAt,
+        completedAt: tickets.completedAt,
+        customerId_fk: customers.id,
+        customerName: customers.name,
+        customerPhone: customers.phone,
+        customerEmail: customers.email,
+        customerAddress: customers.address,
+        customerCreatedAt: customers.createdAt,
+        assignedTechnicianName: users.fullName, // ✅ direct column reference
       })
       .from(tickets)
       .innerJoin(customers, eq(tickets.customerId, customers.id))
       .leftJoin(users, eq(tickets.assignedTechnician, users.id))
       .where(eq(tickets.assignedTechnician, technicianId))
       .orderBy(desc(tickets.createdAt));
-    return rows as TicketWithCustomer[];
+
+    return rows.map((row) => ({
+      id: row.id,
+      ticketId: row.ticketId,
+      customerId: row.customerId,
+      deviceType: row.deviceType,
+      deviceModel: row.deviceModel,
+      serialNumber: row.serialNumber,
+      purchaseDate: row.purchaseDate,
+      issueCategory: row.issueCategory,
+      problemDescription: row.problemDescription,
+      priority: row.priority,
+      serviceStatus: row.serviceStatus,
+      paymentStatus: row.paymentStatus,
+      estimatedCost: row.estimatedCost,
+      finalCost: row.finalCost,
+      assignedTechnician: row.assignedTechnician,
+      serviceNotes: row.serviceNotes,
+      createdAt: row.createdAt,
+      completedAt: row.completedAt,
+      assignedTechnicianName: row.assignedTechnicianName ?? undefined,
+      customer: {
+        id: row.customerId_fk,
+        name: row.customerName,
+        email: row.customerEmail,
+        phone: row.customerPhone,
+        address: row.customerAddress,
+        createdAt: row.customerCreatedAt,
+      },
+    }));
   }
 
   async getTicketsByStatus(status: string): Promise<TicketWithCustomer[]> {
     const rows = await db
       .select({
-        ...tickets,
-        customer: customers,
-        assignedTechnicianName: sql`u.fullName`,
+        id: tickets.id,
+        ticketId: tickets.ticketId,
+        customerId: tickets.customerId,
+        deviceType: tickets.deviceType,
+        deviceModel: tickets.deviceModel,
+        serialNumber: tickets.serialNumber,
+        purchaseDate: tickets.purchaseDate,
+        issueCategory: tickets.issueCategory,
+        problemDescription: tickets.problemDescription,
+        priority: tickets.priority,
+        serviceStatus: tickets.serviceStatus,
+        paymentStatus: tickets.paymentStatus,
+        estimatedCost: tickets.estimatedCost,
+        finalCost: tickets.finalCost,
+        assignedTechnician: tickets.assignedTechnician,
+        serviceNotes: tickets.serviceNotes,
+        createdAt: tickets.createdAt,
+        completedAt: tickets.completedAt,
+        // Customer fields
+        customerId_fk: customers.id,
+        customerName: customers.name,
+        customerPhone: customers.phone,
+        customerEmail: customers.email,
+        customerAddress: customers.address,
+        customerCreatedAt: customers.createdAt,
+        // Assigned technician name
+        assignedTechnicianName: users.fullName,
       })
       .from(tickets)
       .innerJoin(customers, eq(tickets.customerId, customers.id))
       .leftJoin(users, eq(tickets.assignedTechnician, users.id))
       .where(eq(tickets.serviceStatus, status))
       .orderBy(desc(tickets.createdAt));
-    return rows as TicketWithCustomer[];
+
+    return rows.map((row) => ({
+      id: row.id,
+      ticketId: row.ticketId,
+      customerId: row.customerId,
+      deviceType: row.deviceType,
+      deviceModel: row.deviceModel,
+      serialNumber: row.serialNumber,
+      purchaseDate: row.purchaseDate,
+      issueCategory: row.issueCategory,
+      problemDescription: row.problemDescription,
+      priority: row.priority,
+      serviceStatus: row.serviceStatus,
+      paymentStatus: row.paymentStatus,
+      estimatedCost: row.estimatedCost,
+      finalCost: row.finalCost,
+      assignedTechnician: row.assignedTechnician,
+      serviceNotes: row.serviceNotes,
+      createdAt: row.createdAt,
+      completedAt: row.completedAt,
+      assignedTechnicianName: row.assignedTechnicianName ?? undefined,
+      customer: {
+        id: row.customerId_fk,
+        name: row.customerName,
+        email: row.customerEmail,
+        phone: row.customerPhone,
+        address: row.customerAddress,
+        createdAt: row.customerCreatedAt,
+      },
+    }));
   }
 
   async getNextTicketSequence(date: string): Promise<number> {
@@ -292,7 +425,7 @@ export class PgStorage implements IStorage {
         .update(ticket_sequences)
         .set({ sequence: nextSequence.toString() }) // still string in DB
         .where(eq(ticket_sequences.date, date));
-      console.log('Updated ticket sequence:', nextSequence);
+      console.log("Updated ticket sequence:", nextSequence);
     } else {
       await db
         .insert(ticket_sequences)
