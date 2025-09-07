@@ -18,7 +18,6 @@ app.use((req, res, next) => {
     res.status(200).end();
     return;
   }
-
   next();
 });
 
@@ -34,7 +33,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
+  let capturedJsonResponse: Record<string, any> | undefined;
 
   const originalResJson = res.json;
   res.json = function (bodyJson, ...args) {
@@ -47,7 +46,6 @@ app.use((req, res, next) => {
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      if (logLine.length > 120) logLine = logLine.slice(0, 119) + "…";
       console.log(logLine);
     }
   });
@@ -68,22 +66,22 @@ async function safeSeedDefaultUsers() {
 }
 
 // -----------------------
-// Main async startup
+// Main startup function
 // -----------------------
-(async () => {
+async function startServer() {
   try {
-    // Seed default users safely
+    // 1️⃣ Seed default users
     await safeSeedDefaultUsers();
 
-    // Register routes
+    // 2️⃣ Register routes
     await registerRoutes(app);
 
-    // Health check endpoint
+    // 3️⃣ Health check
     app.get("/health", (_req, res) => {
       res.json({ status: "ok", timestamp: new Date().toISOString() });
     });
 
-    // Error handler
+    // 4️⃣ Error handler
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
       const status = err.status || err.statusCode || 500;
       const message = err.message || "Internal Server Error";
@@ -91,7 +89,7 @@ async function safeSeedDefaultUsers() {
       console.error(err);
     });
 
-    // Start server on Render-assigned PORT
+    // 5️⃣ Start server on Render port
     const port = parseInt(process.env.PORT || "5000", 10);
     app.listen(port, "0.0.0.0", () => {
       console.log(`🚀 Backend serving on port ${port}`);
@@ -101,4 +99,7 @@ async function safeSeedDefaultUsers() {
     console.error("Startup failed:", error);
     process.exit(1); // Exit if startup fails
   }
-})();
+}
+
+// Run the server
+startServer();
