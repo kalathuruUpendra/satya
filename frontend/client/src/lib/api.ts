@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // API configuration for communicating with backend
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = 'https://satya-8q1w.onrender.com';
 
 // Create axios instance with default configuration
 export const api = axios.create({
