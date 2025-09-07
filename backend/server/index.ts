@@ -4,7 +4,9 @@ import { seedDefaultUsers } from "./seed";
 
 const app = express();
 
-// CORS middleware - allow everyone safely
+// -----------------------
+// CORS middleware - allow everyone
+// -----------------------
 app.use((req, res, next) => {
   const origin = req.headers.origin || "*";
   res.setHeader("Access-Control-Allow-Origin", origin);
@@ -20,10 +22,15 @@ app.use((req, res, next) => {
   next();
 });
 
+// -----------------------
+// Body parsing
+// -----------------------
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// -----------------------
 // Logging middleware
+// -----------------------
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -39,10 +46,8 @@ app.use((req, res, next) => {
     const duration = Date.now() - start;
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
-      if (logLine.length > 80) logLine = logLine.slice(0, 79) + "…";
+      if (capturedJsonResponse) logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+      if (logLine.length > 120) logLine = logLine.slice(0, 119) + "…";
       console.log(logLine);
     }
   });
@@ -50,33 +55,39 @@ app.use((req, res, next) => {
   next();
 });
 
+// -----------------------
+// Main async startup
+// -----------------------
 (async () => {
-  // Seed default users on startup
   try {
+    // Seed default users once
     await seedDefaultUsers();
+    console.log("✅ Default users seeding completed");
+
+    // Register routes
+    await registerRoutes(app);
+
+    // Health check endpoint
+    app.get("/health", (_req, res) => {
+      res.json({ status: "ok", timestamp: new Date().toISOString() });
+    });
+
+    // Error handler
+    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+      const status = err.status || err.statusCode || 500;
+      const message = err.message || "Internal Server Error";
+      res.status(status).json({ message });
+      console.error(err);
+    });
+
+    // Start server on Render-assigned PORT
+    const port = parseInt(process.env.PORT || "5000", 10);
+    app.listen(port, "0.0.0.0", () => {
+      console.log(`🚀 Backend serving on port ${port}`);
+    });
+
   } catch (error) {
-    console.error("Failed to seed default users:", error);
+    console.error("Startup failed:", error);
+    process.exit(1); // Exit if startup fails
   }
-
-  // Register routes
-  await registerRoutes(app);
-
-  // Error handler
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-    res.status(status).json({ message });
-    console.error(err);
-  });
-
-  // Health check
-  app.get("/health", (_req, res) => {
-    res.json({ status: "ok", timestamp: new Date().toISOString() });
-  });
-
-  // Start server
-  const port = parseInt(process.env.PORT || "5000", 10);
-  app.listen(port, "0.0.0.0", () => {
-    console.log(`Backend serving on port ${port}`);
-  });
 })();
