@@ -56,13 +56,24 @@ app.use((req, res, next) => {
 });
 
 // -----------------------
+// Safe seeding guard
+// -----------------------
+let seeded = false;
+async function safeSeedDefaultUsers() {
+  if (!seeded) {
+    await seedDefaultUsers();
+    seeded = true;
+    console.log("✅ Default users seeded once");
+  }
+}
+
+// -----------------------
 // Main async startup
 // -----------------------
 (async () => {
   try {
-    // Seed default users once
-    await seedDefaultUsers();
-    console.log("✅ Default users seeding completed");
+    // Seed default users safely
+    await safeSeedDefaultUsers();
 
     // Register routes
     await registerRoutes(app);
