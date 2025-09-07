@@ -121,12 +121,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
               {isLoading ? "Logging in..." : "Login"}
             </Button>
           </form>
-
-          <div className="mt-6 text-xs text-muted-foreground text-center">
-            <p>Demo Credentials:</p>
-            <p>Frontdesk: admin / admin123</p>
-            <p>Technician: tech1 / tech123</p>
-          </div>
         </CardContent>
       </Card>
     </div>
