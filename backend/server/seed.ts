@@ -58,15 +58,10 @@ export async function seedDefaultUsers() {
   }
 }
 
-// Run seeding if this file is executed directly
+// ✅ Only run directly in CLI (`npm run db:seed`), not when imported
 if (import.meta.url === `file://${process.argv[1]}`) {
-  seedDefaultUsers()
-    .then(() => {
-      console.log("Seeding finished successfully");
-      process.exit(0);
-    })
-    .catch((error) => {
-      console.error("Seeding failed:", error);
-      process.exit(1);
-    });
+  seedDefaultUsers().then(() => {
+    console.log("Seeding finished successfully");
+    // no process.exit here — let Node exit naturally
+  });
 }
