@@ -68,15 +68,7 @@ export const insertCustomerSchema = createInsertSchema(customers).omit({
   createdAt: true,
 });
 
-export const insertTicketSchema = createInsertSchema(tickets).omit({
-  id: true,
-  ticketId: true,
-  customerId: true,
-  createdAt: true,
-  completedAt: true,
-  serviceNotes: true,
-  assignedTechnician: true,
-}).extend({
+export const insertTicketSchema = z.object({
   customerName: z.string().min(1),
   customerPhone: z.string().min(1),
   customerEmail: z.string().optional(),
@@ -93,10 +85,12 @@ export const insertTicketSchema = createInsertSchema(tickets).omit({
   assignedTechnician: z.string().optional(),
 
   estimatedCost: z.preprocess(
-    (val: unknown) => val === "" ? undefined : Number(val),
+    val => (val === "" ? undefined : Number(val)),
     z.number().optional()
   ),
 });
+
+
 
 
 export const updateTicketStatusSchema = z.object({
