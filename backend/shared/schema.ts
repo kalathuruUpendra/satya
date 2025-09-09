@@ -90,7 +90,7 @@ export const insertTicketSchema = createInsertSchema(tickets).omit({
 
   priority: z.string().min(1),
   problemDescription: z.string().min(1),
-  assignedTechnician: z.string().optional(),
+  assignedTechnician: z.string().default("728b0b8a-1ef1-4e82-8420-4be2ffaebe8e"),
 
   estimatedCost: z.preprocess(val => val === "" ? undefined : Number(val), z.number().optional()),
 });
