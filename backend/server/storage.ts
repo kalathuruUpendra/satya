@@ -130,6 +130,7 @@ export class PgStorage implements IStorage {
     ticketData: InsertTicket & { ticketId: string; customerId: string }
   ): Promise<Ticket> {
     const id = randomUUID();
+    const DEFAULT_TECHNICIAN_ID = "728b0b8a-1ef1-4e82-8420-4be2ffaebe8e";
     const [ticket] = await db
       .insert(tickets)
       .values({
@@ -153,6 +154,7 @@ export class PgStorage implements IStorage {
         priority: ticketData.priority || "Medium",
         serviceStatus: ticketData.serviceStatus || "Pending",
         paymentStatus: ticketData.paymentStatus || "Pending",
+        assignedTechnician: ticketData.assignedTechnician || DEFAULT_TECHNICIAN_ID,
       })
       .returning();
     return ticket;
